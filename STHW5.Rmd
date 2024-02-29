@@ -5,6 +5,7 @@ output: html_document
 date: "2024-02-21"
 ---
 
+git: https://github.com/MarkHerndon/STHW5.git
 
 
 # Problem 1
