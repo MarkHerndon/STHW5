@@ -1,0 +1,292 @@
+---
+title: "STHW5"
+author: "Mark Herndon; RMH 3867"
+output: html_document
+date: "2024-02-21"
+---
+
+
+
+# Problem 1
+
+
+>A.) The Null hypothesis we are testing for this problem is that over the long run the observed data we've encountered for Iron bank, being the 70 flagged cases out of 2021, aligns with the SEC's base flag rate of 2.4%.
+
+
+>B.) The test statistic we use to measure evidence against the null hypothesis is a 3.4% flag rate or 70 flagged cases out of 2021 cases.
+
+
+
+>C.) Plot of the probability distribution for this test statistic assuming 
+ the null hypothesis is true:
+
+
+
+```{r, message=FALSE, Echo = FALSE}
+
+library(tidyverse)
+library(mosaic)
+
+
+# Simulating flagging cases suspicious or not
+# out of 2021 cases with the SECs base prob of 2.4% to be flagged, 10000 times
+# Representing if null hypothesis is true
+
+
+
+flag_sim <- do(10000)*nflip(n=2021, prob=0.024)
+
+
+
+# Our test statistic is 70/2021 or 3.4%. lets plot the distribution of our flagging simulation and see the prob of having 70 cases flagged out 2021.
+
+
+ggplot(data = flag_sim) + 
+    geom_histogram(aes(x=nflip), binwidth=1)
+
+
+# Assesment: First we'll see how many times 70 cases were flagged or more.
+
+
+our_case <- sum(flag_sim >= 70)
+
+our_case
+
+# Occured 18 times out of 10000
+
+flagP_val <- (our_case/10000)
+
+flagP_val
+
+# p-value = 0.0018
+
+# Smaller p-value means the null hypothesis is more evidence against the null hypothesis
+
+
+```
+
+
+>Conclusion: From the plotted probability distribution we find that the P-value to be 
+ 0.0018. This means that if the null hypothesis were true, which is that our given case happened because it aligns with the base SEC flag rate of 2.4%. The probability of seeing a test statistic of a 3.4% flag rate, or something more extreme, is unlikely. To a statistical extent since this value is lower than the conventional signficance threshold of 0.05 this would lead us to reject the null hypothesis and investigate further. However The residual of these rates from our observed data isnt large enough to have practical significance though so the null hypothesis is true in a pragmatic sense.
+
+
+
+
+
+# Problem 2
+
+>A.) The Null hypothesis we are testing for this problem is that the restaurant chain, Gourmet Bite's 8 reported health code health code violations out of the chain's 50 inspections are due to restaurants, on avergae, being cited at a base rate of 3%.
+
+
+>B.) The test statistic we use to measure evidence against the null hypothesis is a violation rate of 16% or 8 citations out of 50 inspections.
+
+
+
+>C.) Plot of the probability distribution for this test statistic assuming 
+ the null hypothesis is true:
+
+```{r, message=FALSE, echo=FALSE}
+
+
+# So we'll represent simulating the null hypothesis using the 50 inspections with a probability of 3% being cited
+
+
+cite_sim <- do(10000)*nflip(n=50, prob = 0.03)
+
+
+# Now we'll plot the prob distribution  
+
+
+ggplot(data = cite_sim) +
+  geom_histogram(aes(x=nflip))
+
+
+# Calculate p-value
+
+
+gbite <- sum(cite_sim >= 8)
+
+gbite
+
+gbP_val <- (gbite/10000)
+
+gbP_val
+
+#0.0001
+
+```
+
+
+>Conclusion: With a p-value of 0.0001 the local health department would be inclined to investigate this case further as having 8 citations out of 50 under the department's null hypothesis that restaurants get cited at a base rate of 3%, is an unlikey event to happen. So the local health department would be likely to reject the null hypothesis as the P-value holds statistical significance being well below 0.05. It also holds some practical significance as the residual of the rates is 13% which is a sizeable differnce to take into account.
+
+
+
+
+
+
+
+# Problem 3
+
+
+**Part A:**
+
+```{r, message = FALSE, Echo = FALSE}
+
+
+brown <- readLines("/Users/markherndon/Downloads/brown_sentences.txt")
+
+letter_freq <- read.csv("/Users/markherndon/Downloads/letter_frequencies.csv")
+
+# Cleaning sentences, removing spaces and converting to uppercase
+
+clean_brown = gsub("[^A-Za-z]", "", brown)
+
+  clean_brown = toupper(clean_brown)
+  
+#clean_brown <- paste(clean_brown, collapse = "")
+
+
+# Counting the frequency of each letter for each sentence using a function or our observed frequencies
+
+calc_freq <- function(sentence) {  
+  
+observed_freq <- table(factor(strsplit(sentence, "")[[1]], levels = LETTERS))
+
+return(observed_freq)
+
+
+}  
+
+
+let_count <-  calc_freq(clean_brown)
+
+sum(let_count)
+
+# Comparing the observed frequencies of each letter to the expected frequencies we'd get from the expected distribution of the probability that letter will occur in a sentence
+
+
+expected_freq = letter_freq$Probability*128
+
+
+freq_comp <- tibble(observed = let_count, expected = expected_freq)
+
+freq_comp
+
+# Calculating chi squared statistic for each sentence
+
+
+chi2_calc = function(observed, expected) {
+  
+equation = sum((observed - expected)^2 / expected)
+  
+return(equation)
+  
+}
+
+
+chi2_each = chi2_calc(freq_comp$observed, freq_comp$expected)
+
+
+chi2_each
+
+
+# calculating chi squared for all sentences and mapping distribution for a null or refrence distribution
+
+freq_all <- lapply(clean_brown, calc_freq)
+
+chi_distrib <- numeric(length(clean_brown))
+
+for (i in seq_along(clean_brown)) {
+  
+  chi_distrib[i] <- chi2_calc(freq_all[[i]], expected_freq)
+}
+
+
+
+
+```
+
+
+> Write up: Here i've calculated our null distribution, that is, the distribution of chi squared values of various scentences to show the "typical" spread of the deviation of english letters to occur based on their expected probability to occur.
+
+
+
+**Part B:**
+
+
+```{r, message=FALSE, echo=FALSE}
+
+
+ex_sentences <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+# Using from function from class to calculate chi squared with the entire process
+
+
+calculate_chi_squared = function(sentence, freq_table) {
+  
+  # Ensure letter frequencies are normalized and sum to 1
+  letter_freq$Probability = letter_freq$Probability / sum(letter_freq$Probability)
+  
+  # Remove non-letters and convert to uppercase
+  clean_sentence = gsub("[^A-Za-z]", "", sentence)
+  clean_sentence = toupper(clean_sentence)
+  
+  # Count the occurrences of each letter in the sentence
+  observed_counts = table(factor(strsplit(clean_sentence, "")[[1]], levels = freq_table$Letter))
+  
+  # Calculate expected counts
+  total_letters = sum(observed_counts)
+  expected_counts = total_letters * letter_freq$Probability
+  
+  # Chi-squared statistic
+  chi_squared_stat = sum((observed_counts - expected_counts)^2 / expected_counts)
+  
+  return(chi_squared_stat)
+}
+
+
+# Iterating through each scentence, calculating chi squared and p value
+
+
+watermark <- numeric(length(ex_sentences))
+
+occ_extreme <- numeric(length(ex_sentences))
+
+pvalue <- numeric(length(ex_sentences))
+
+for (i in seq_along(ex_sentences)) {
+  watermark[i] <- calculate_chi_squared(ex_sentences[i], letter_freq)
+  
+ occ_extreme[i] <- sum(chi_distrib >= watermark[i])
+ 
+ pvalue[i] <- round(occ_extreme[i] / length(chi_distrib), 3)
+  
+}
+
+
+
+
+tibble(watermark, occ_extreme, pvalue)
+  
+
+
+```
+
+>Conclusion: When we use our null or refrence distribution of chi squared values to show the "typical" spread of english letter occurence deviations based on their expected probability to occur, and find the respective p-values for each sentence, we find the most likely scentence to be written by a LLM is #6. When evaluating the p-values, we find that none of these deviations fall below the .05 threshold to gain statistical significance and to provide evidence against the null hypothesis. However, comparing them relatively to one another we find that sentence 6's p-value is much lower than the others with 0.135. Meaning that out of each sentence, 6's chi squared deviation is more unlikely to be found based on the typical spread, indicating a LLM's watermark is in place deviating the letters from what we 'typically' see. 
+
+
+
+
+
+
